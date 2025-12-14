@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Experiment results (generated files - exclude)
+experiments/
+*.pth
+*.png
+
+# Exclude text files from experiments, but keep requirements.txt
+experiments/**/*.txt
+
+# TensorBoard logs
+tensorboard_logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated files
+class_distribution.png
+
+# Dataset is included in Git (using Git LFS if needed)
+# satellite-dataset/  <- commented out to include dataset
+
