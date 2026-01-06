@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
 from datetime import datetime
 
 # Local imports
@@ -99,26 +99,44 @@ def train(model, train_loader, val_loader, criterion, optimizer, epochs, name="e
 def main():
     print(f"Using device: {DEVICE}")
     
-    # 1. Prepare Data
-    print("Loading data...")
-    data = get_image_label_pairs("satellite-dataset")
-    train_data, val_data = train_test_split(data, test_size=0.2, shuffle=True, stratify=[x[1] for x in data])
+    # 2. K-Fold Cross Validation
+    k_folds = 5
+    kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
     
-    train_ds = SatelliteDataset(train_data, transform=get_transforms(train=True))
-    val_ds = SatelliteDataset(val_data, transform=get_transforms(train=False))
+    fold_accuracies = []
     
-    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
-    val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS)
+    print(f"Starting {k_folds}-Fold Cross Validation...")
     
-    # 2. Setup Model
-    model = SatelliteCNN().to(DEVICE)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
-    
-    # 3. Train
-    print("Starting Main Training...")
-    best_acc = train(model, train_loader, val_loader, criterion, optimizer, EPOCHS, name="baseline")
-    print(f"Training finished! Best accuracy: {best_acc:.4f}")
+    # Iterate through folds
+    for fold, (train_idx, val_idx) in enumerate(kf.split(data)):
+        print(f"\nFold {fold+1}/{k_folds}")
+        
+        # Split data
+        train_sub = [data[i] for i in train_idx]
+        val_sub = [data[i] for i in val_idx]
+        
+        # Create datasets & loaders
+        train_ds = SatelliteDataset(train_sub, transform=get_transforms(train=True))
+        val_ds = SatelliteDataset(val_sub, transform=get_transforms(train=False))
+        
+        train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_WORKERS)
+        val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_WORKERS)
+        
+        # Setup fresh model for each fold
+        model = SatelliteCNN().to(DEVICE)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+        
+        # Train
+        best_acc_fold = train(model, train_loader, val_loader, criterion, optimizer, EPOCHS, name=f"fold_{fold+1}")
+        fold_accuracies.append(best_acc_fold)
+        print(f"Fold {fold+1} Best Accuracy: {best_acc_fold:.4f}")
+
+    # Summary
+    avg_acc = sum(fold_accuracies) / k_folds
+    print(f"\nCross-Validation Finished!")
+    print(f"Fold Accuracies: {[round(x, 4) for x in fold_accuracies]}")
+    print(f"Average Accuracy: {avg_acc:.4f}")
 
 if __name__ == "__main__":
     main()
