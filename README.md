@@ -103,6 +103,16 @@ TensorBoard logs are written to `artifacts/runs/`:
 tensorboard --logdir artifacts/runs
 ```
 
+## Results
+
+Final metrics from a full **5-Fold Stratified Cross Validation** run:
+
+- Average Accuracy: **89.26%**
+- Fold Accuracies: `89.26%, 89.08%, 89.88%, 87.03%, 91.03%`
+- Best Fold Accuracy: **91.03%**
+
+These results indicate stable performance across folds, with good generalization on the current dataset.
+
 ## Testing
 
 ```bash
